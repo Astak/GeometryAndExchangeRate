@@ -3,11 +3,11 @@ namespace GeometryAndExchangeRate.Service;
 static class GeometryCalculator {
     public static Quadrant IdentifyQuadrant(float x, float y) {
         if(x > 0f) {
-            if(y > 0) return Quadrant.First;
-            if(y < 0) return Quadrant.Fourth;
+            if(y > 0f) return Quadrant.First;
+            if(y < 0f) return Quadrant.Fourth;
         } else {
-            if(y > 0) return Quadrant.Second;
-            if(y < 0) return Quadrant.Third;
+            if(y > 0f) return Quadrant.Second;
+            if(y < 0f) return Quadrant.Third;
         }
         return Quadrant.None;
     }
@@ -15,9 +15,9 @@ static class GeometryCalculator {
         float squaredCenterDistance = x * x + y * y;
         float squaredRadius = radius * radius;
         float diff = squaredRadius - squaredCenterDistance;
-        if(diff > 0) {
+        if(diff > 0f) {
             return CircleRelatedPosition.Inside;
-        } else if(diff < 0) {
+        } else if(diff < 0f) {
             return CircleRelatedPosition.Outside;
         } else {
             return CircleRelatedPosition.On;
