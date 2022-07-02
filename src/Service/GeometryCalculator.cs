@@ -15,7 +15,6 @@ static class GeometryCalculator {
         float squaredCenterDistance = x * x + y * y;
         float squaredRadius = radius * radius;
         float diff = squaredRadius - squaredCenterDistance;
-        Console.WriteLine($"{squaredCenterDistance}, {squaredRadius}, {diff}");
         if(diff > 0) {
             return CircleRelatedPosition.Inside;
         } else if(diff < 0) {
