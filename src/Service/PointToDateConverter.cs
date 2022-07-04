@@ -1,9 +1,6 @@
 using System.Globalization;
 
 namespace GeometryAndExchangeRate.Service;
-public interface IPointToDateConverter {
-    DateTime Convert(float x, float y);
-}
 public class QuadrantBasedPointToDateConverter : IPointToDateConverter {
     readonly float radius;
     public QuadrantBasedPointToDateConverter(float radius) {

@@ -6,14 +6,19 @@ namespace GeometryAndExchangeRate.Service.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class ExchangeRatesController : ControllerBase {
-    readonly ILogger<ExchangeRatesController> _logger;
+    readonly ILogger<ExchangeRatesController> logger;
+    readonly IPointToDateConverter pointToDateConverter;
+    readonly IExchangeRateService exchangeRateService;
 
-    public ExchangeRatesController(ILogger<ExchangeRatesController> logger) {
-        _logger = logger;
+    public ExchangeRatesController(ILogger<ExchangeRatesController> logger, IPointToDateConverter pointToDateConverter, IExchangeRateService exchangeRateService) {
+        this.logger = logger;
+        this.pointToDateConverter = pointToDateConverter;
+        this.exchangeRateService = exchangeRateService;
     }
 
     [HttpGet("x{x:float}y{y:float}")]
-    public ExchangeRate Get(float x, float y) {
-        throw new NotImplementedException();
+    public async Task<ExchangeRate> Get(float x, float y) {
+        DateTime onDate = pointToDateConverter.Convert(x, y);
+        return await exchangeRateService.GetExchangeRateAsync(onDate);
     }
 }
