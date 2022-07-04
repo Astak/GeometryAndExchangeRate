@@ -1,6 +1,3 @@
-using GeometryAndExchangeRate.Service;
-using GeometryAndExchangeRate.Service.Clients;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,8 +11,8 @@ builder.Services.Configure<RouteOptions>(options => {
     options.LowercaseUrls = true;
 });
 
-builder.Services.AddSingleton<IPointToDateConverter>(new QuadrantBasedPointToDateConverter(1f));
-builder.Services.AddSingleton<IExchangeRateService>(new DwsClient());
+builder.Services.AddQuadrantBasedPointToDateConverter(builder.Configuration);
+builder.Services.AddDwsClient(builder.Configuration);
 
 var app = builder.Build();
 
@@ -30,6 +27,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseDwsClient();
 
 app.MapControllers();
 
