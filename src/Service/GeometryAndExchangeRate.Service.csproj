@@ -12,6 +12,7 @@
     <PackageReference Include="System.ServiceModel.Http" Version="4.8.*" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.*" />
     <PackageReference Include="System.ServiceModel.Security" Version="4.8.*" />
+    <PackageReference Include="NReco.Logging.File" Version="1.1.5" />  
   </ItemGroup>
 
 </Project>

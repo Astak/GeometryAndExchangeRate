@@ -17,6 +17,10 @@ builder.Services.Configure<RouteOptions>(options => {
 
 builder.Services.AddQuadrantBasedPointToDateConverter(builder.Configuration);
 builder.Services.AddDwsClient(builder.Configuration);
+builder.Services.AddLogging(loggingBuilder => {
+    var loggingSection = builder.Configuration.GetRequiredSection("Logging");
+    loggingBuilder.AddFile(loggingSection);
+});
 
 var app = builder.Build();
 
