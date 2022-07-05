@@ -8,7 +8,7 @@ namespace GeometryAndExchangeRate.Service {
         public DateTime Convert(float x, float y) {
             var circleRelatedPosition = GeometryCalculator.CalcCircleRelatedPosition(radius, x, y);
             if(circleRelatedPosition != CircleRelatedPosition.Inside) {
-                throw new ArgumentOutOfRangeException(string.Empty, string.Format(CultureInfo.CurrentUICulture, "Could not identify the date, because the distance to the center is not less than {0}.", radius));
+                throw new ArgumentOutOfRangeException(string.Empty, string.Format(CultureInfo.CurrentUICulture, "Could not identify the date, because the coordinate did not fall into a circle of radius {0}.", radius));
             }
             var quadrant = GeometryCalculator.IdentifyQuadrant(x, y);
             switch(quadrant) {
@@ -21,7 +21,7 @@ namespace GeometryAndExchangeRate.Service {
                 case Quadrant.Fourth:
                     return DateTime.Today.AddDays(1);
                 default:
-                    throw new ArgumentOutOfRangeException(string.Empty, "Could not identify the date, because x or y is zero.");
+                    throw new ArgumentOutOfRangeException(string.Empty, "Could not identify the quadrant, because x or y is zero.");
             }
         }
     }

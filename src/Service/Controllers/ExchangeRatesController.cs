@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using GeometryAndExchangeRate.Service.Models;
+using GeometryAndExchangeRate.Service.ErrorHandling;
 
 namespace GeometryAndExchangeRate.Service.Controllers;
 
@@ -18,7 +19,16 @@ public class ExchangeRatesController : ControllerBase {
 
     [HttpGet("x{x:float}y{y:float}")]
     public async Task<ExchangeRate> Get(float x, float y) {
-        DateTime onDate = pointToDateConverter.Convert(x, y);
-        return await exchangeRateService.GetExchangeRateAsync(onDate);
+        DateTime onDate;
+        try{
+            onDate = pointToDateConverter.Convert(x, y);
+        } catch(ArgumentOutOfRangeException ex) {
+            throw new UserFriendlyException("Argument out of range", ex.Message, ex);
+        }
+        try {
+            return await exchangeRateService.GetExchangeRateAsync(onDate);
+        } catch(ExchangeRateServiceException ex) {
+            throw new UserFriendlyException("No exchane rate data", ex.Message, ex);
+        }
     }
 }

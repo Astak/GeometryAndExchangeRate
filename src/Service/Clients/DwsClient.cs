@@ -1,24 +1,26 @@
 namespace GeometryAndExchangeRate.Service.Clients {
     using System.Data;
     using System.Xml;
+    using System.Globalization;
     using GeometryAndExchangeRate.Service.Models;
     using GeometryAndExchangeRate.Service.ServiceReference;
+    using GeometryAndExchangeRate.Service.ErrorHandling;
 
     class DwsClient : IExchangeRateService {
         readonly string currencyCode;
         public DwsClient(string currencyCode) {
             this.currencyCode = currencyCode;
         }
-        public async Task<ExchangeRate> GetExchangeRateAsync(DateTime onDate) => CreateModel(ReadExchangeRateXml(await GetExchangeRateXmlAsync(onDate).ConfigureAwait(false)));
+        public async Task<ExchangeRate> GetExchangeRateAsync(DateTime onDate) => CreateModel(ReadExchangeRateXml(await GetExchangeRateXmlAsync(onDate).ConfigureAwait(false)), onDate);
 
-        async Task<string> GetExchangeRateXmlAsync(DateTime onDate) {
+        static async Task<string> GetExchangeRateXmlAsync(DateTime onDate) {
             using(var client = new DailyInfoSoapClient(DailyInfoSoapClient.EndpointConfiguration.DailyInfoSoap)) {
                 var cursOnDate = await client.GetCursOnDateXMLAsync(onDate).ConfigureAwait(false);
                 return cursOnDate.OuterXml;
             }
         }
 
-        DataSet ReadExchangeRateXml(string xml) {
+        static DataSet ReadExchangeRateXml(string xml) {
             var dataSet = new DataSet();
             using(var reader = new XmlTextReader(xml, XmlNodeType.Element, null)) {
                 dataSet.ReadXml(reader);
@@ -26,20 +28,45 @@ namespace GeometryAndExchangeRate.Service.Clients {
             return dataSet;
         }
 
-        ExchangeRate CreateModel(DataSet dataSet) {
+        ExchangeRate CreateModel(DataSet dataSet, DateTime requestedDate) {
+            var tValuteData = dataSet.Tables["ValuteData"];
             var tValuteCursOnDate = dataSet.Tables["ValuteCursOnDate"];
-            if(tValuteCursOnDate == null) {
-                throw new InvalidOperationException("Unexpected server response: the ValueCursOnDate table does not exist. Server: DWS, resource: GetCursOnDateXML");
+            if(tValuteCursOnDate == null || tValuteData == null) {
+                throw new InvalidOperationException(string.Format(CultureInfo.CurrentUICulture, "Unexpected server response: the ValueCursOnDate or ValuteData table does not exist. Server: {0}, resource: GetCursOnDateXML", DailyInfoSoapClient.DwsApiAddress));
             }
 
-            var valuteCursOnDate = from curs in tValuteCursOnDate.Rows.Cast<DataRow>()
-                                    where (string)curs["VchCode"] == currencyCode
-                                    select new ExchangeRate {
-                                        CurrencyName = ((string)curs["Vname"]).Trim(),
-                                        Value = decimal.Parse((string)curs["Vcurs"]) / decimal.Parse((string)curs["Vnom"]) 
-                                    };
+            var valuteData = (from data in tValuteData.Rows.Cast<DataRow>()
+                             select new {
+                                ValuteData_Id = (int)data["ValuteData_Id"],
+                                OnDate = (string)data["OnDate"]
+                             }).ToList();
+            var valuteCursOnDate = (from curs in tValuteCursOnDate.Rows.Cast<DataRow>()
+                                   select new {
+                                    ValuteData_Id = (int)curs["ValuteData_Id"],
+                                    VchCode = (string)curs["VchCode"],
+                                    Vname = ((string)curs["Vname"]).Trim(),
+                                    Vcurs = decimal.Parse((string)curs["Vcurs"]),
+                                    Vnom = decimal.Parse((string)curs["Vnom"])
+                                   }).ToList();
 
-            return valuteCursOnDate.Single();       
+            string requestedDateCode = requestedDate.ToString("yyyyMMdd");
+            string? onDateCode = valuteData.Select(x => x.OnDate).SingleOrDefault();
+            if(requestedDateCode != onDateCode) {
+                throw new NoExchangeRateDataOnDateException(requestedDateCode, onDateCode);
+            }
+            
+            var exchangeRates = from curs in valuteCursOnDate
+                         where curs.VchCode == currencyCode
+                         select new ExchangeRate {
+                            CurrencyName = curs.Vname,
+                            Value = curs.Vcurs / curs.Vnom,
+                         };
+            var result = exchangeRates.Single();       
+
+            if(result == null) {
+                throw new NoExchangeRateDataForCurrencyException(currencyCode);
+            }
+            return result;
         }
     }
 }
