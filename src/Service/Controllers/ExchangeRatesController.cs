@@ -29,7 +29,7 @@ public class ExchangeRatesController : ControllerBase {
             throw new UserFriendlyException("Argument out of range", ex.Message, ex);
         }
         try {
-            return await exchangeRateService.GetExchangeRateAsync(onDate);
+            return await exchangeRateService.GetExchangeRateAsync(onDate).ConfigureAwait(false);
         } catch(ExchangeRateServiceException ex) {
             logger.LogError(ex, "{timestamp:G}: Could not retrieve exchange rate data for {date:yyyyMMdd}.\r\n", DateTime.UtcNow, onDate);
             throw new UserFriendlyException("No exchane rate data", ex.Message, ex);
